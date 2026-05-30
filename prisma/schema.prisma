@@ -1,0 +1,217 @@
+// AromaFlow — Integrated Manufacturing Operations Platform for Sima Arome
+// SQLite has no native enums; string fields use the constants in src/lib/constants.ts
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String // ADMIN | WAREHOUSE | QC | PPIC | DISPATCH
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  intakesReceived Intake[]             @relation("IntakeReceivedBy")
+  inspections     QcInspection[]
+  lotsCreated     Lot[]
+  schedules       ProductionSchedule[]
+  placements      Placement[]
+  dispatches      Dispatch[]
+  auditLogs       AuditLog[]
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  country   String
+  createdAt DateTime @default(now())
+  intakes   Intake[]
+}
+
+model Material {
+  id              String @id @default(cuid())
+  sku             String @unique
+  name            String
+  category        String // FRUIT | BOTANICAL | EXTRACT | POWDER
+  unit            String // kg | L | drum
+  // QC reference colour in CIELAB space + acceptance thresholds
+  specL           Float
+  specA           Float
+  specB           Float
+  toleranceDeltaE Float  @default(3.0)
+  minUniformity   Float  @default(70) // 0-100
+  maxDefects      Int    @default(2)
+  // storage requirements
+  requiresColdChain Boolean  @default(false)
+  coldMinC          Float?
+  coldMaxC          Float?
+  hazardClass       String? // e.g. FLAMMABLE; null = non-hazardous
+  createdAt         DateTime @default(now())
+
+  intakes   Intake[]
+  lots      Lot[]
+  schedules ProductionSchedule[]
+}
+
+model Intake {
+  id            String   @id @default(cuid())
+  code          String   @unique // GRN-2026-0001
+  supplierId    String
+  materialId    String
+  quantity      Float
+  unit          String
+  supplierBatch String
+  status        String   @default("RECEIVED") // RECEIVED | IN_QC | PASSED | FAILED | QUARANTINED
+  receivedById  String
+  receivedAt    DateTime @default(now())
+  notes         String?
+
+  supplier    Supplier             @relation(fields: [supplierId], references: [id])
+  material    Material             @relation(fields: [materialId], references: [id])
+  receivedBy  User                 @relation("IntakeReceivedBy", fields: [receivedById], references: [id])
+  inspections QcInspection[]
+  lots        Lot[]
+  schedules   ProductionSchedule[]
+}
+
+model QcInspection {
+  id             String   @id @default(cuid())
+  intakeId       String
+  inspectedById  String
+  method         String // ONDEVICE_CV | LLM_VISION | MANUAL
+  imageData      String? // small data-URL thumbnail of inspected sample
+  measuredL      Float
+  measuredA      Float
+  measuredB      Float
+  deltaE         Float
+  uniformity     Float
+  defectCount    Int
+  foreignMatter  Boolean  @default(false)
+  result         String // PASS | FAIL (final, after any override)
+  autoResult     String // PASS | FAIL (engine verdict before override)
+  overridden     Boolean  @default(false)
+  overrideReason String?
+  aiNotes        String?
+  inspectedAt    DateTime @default(now())
+
+  intake      Intake @relation(fields: [intakeId], references: [id])
+  inspectedBy User   @relation(fields: [inspectedById], references: [id])
+}
+
+model Lot {
+  id          String   @id @default(cuid())
+  lotNumber   String   @unique // LOT-2026-0001
+  intakeId    String
+  materialId  String
+  quantity    Float
+  status      String   @default("CREATED") // CREATED | IN_PRODUCTION | FINISHED | DISPATCHED
+  scheduleId  String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  intake     Intake              @relation(fields: [intakeId], references: [id])
+  material   Material            @relation(fields: [materialId], references: [id])
+  schedule   ProductionSchedule? @relation(fields: [scheduleId], references: [id])
+  createdBy  User                @relation(fields: [createdById], references: [id])
+  placements Placement[]
+  dispatches Dispatch[]
+}
+
+model ProductionSchedule {
+  id             String   @id @default(cuid())
+  code           String   @unique // PO-2026-0001
+  intakeId       String
+  materialId     String
+  plannedQty     Float
+  scheduledStart DateTime
+  scheduledEnd   DateTime
+  status         String   @default("PLANNED") // PLANNED | RUNNING | DONE
+  createdById    String
+  createdAt      DateTime @default(now())
+
+  intake    Intake   @relation(fields: [intakeId], references: [id])
+  material  Material @relation(fields: [materialId], references: [id])
+  createdBy User     @relation(fields: [createdById], references: [id])
+  lots      Lot[]
+}
+
+model StorageLocation {
+  id          String  @id @default(cuid())
+  code        String  @unique // A-1
+  zone        String // AMBIENT | COLD | HAZMAT
+  row         Int
+  col         Int
+  capacity    Int     @default(1)
+  coldMinC    Float?
+  coldMaxC    Float?
+  hazardClass String? // hazard class permitted in this HAZMAT cell
+
+  placements Placement[]
+  temps      TempReading[]
+}
+
+model Placement {
+  id         String    @id @default(cuid())
+  lotId      String
+  locationId String
+  placedById String
+  placedAt   DateTime  @default(now())
+  removedAt  DateTime?
+
+  lot      Lot             @relation(fields: [lotId], references: [id])
+  location StorageLocation @relation(fields: [locationId], references: [id])
+  placedBy User            @relation(fields: [placedById], references: [id])
+}
+
+model TempReading {
+  id         String   @id @default(cuid())
+  locationId String
+  tempC      Float
+  alert      Boolean  @default(false)
+  recordedAt DateTime @default(now())
+
+  location StorageLocation @relation(fields: [locationId], references: [id])
+}
+
+model Dispatch {
+  id             String   @id @default(cuid())
+  code           String   @unique // SHP-2026-0001
+  lotId          String
+  customerName   String
+  destination    String // LOCAL | EXPORT
+  quantity       Float
+  status         String   @default("DISPATCHED")
+  dispatchedById String
+  dispatchedAt   DateTime @default(now())
+
+  lot          Lot  @relation(fields: [lotId], references: [id])
+  dispatchedBy User @relation(fields: [dispatchedById], references: [id])
+}
+
+// Tamper-evident, hash-chained audit trail. Each entry's hash covers the
+// previous entry's hash, so any retroactive edit breaks the chain.
+model AuditLog {
+  id         String   @id @default(cuid())
+  seq        Int      @unique // assigned sequentially in the audit service
+  actorId    String?
+  actorName  String
+  action     String
+  entityType String
+  entityId   String
+  summary    String
+  metadata   String? // JSON
+  prevHash   String
+  hash       String
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+}
