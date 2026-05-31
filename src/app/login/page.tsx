@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { demoLoginAction } from "@/app/actions";
 import { LoginForm } from "@/components/LoginForm";
 import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS } from "@/lib/constants";
-import { Leaf, ShieldCheck, ScanLine, ClipboardCheck } from "lucide-react";
+import { ShieldCheck, ScanLine, ClipboardCheck } from "lucide-react";
 
 export default async function LoginPage() {
   const user = await getCurrentUser();
@@ -21,7 +21,7 @@ export default async function LoginPage() {
         {/* Content Wrapper (z-10 ensures it sits above the overlay) */}
         <div className="relative z-10 flex h-full flex-col justify-between">
           <div className="flex items-center gap-2">
-            <Leaf className="h-7 w-7" />
+            <div className="h-8 w-8 bg-white/80 mask-[url('/logo_white.svg')] mask-contain mask-no-repeat mask-center" />
             <span className="text-lg font-semibold tracking-tight">AromaFlow</span>
           </div>
           
@@ -49,7 +49,7 @@ export default async function LoginPage() {
         <div className="w-full max-w-sm">
           {/* ... Rest of your right-side auth code stays exactly the same ... */}
           <div className="mb-6 flex items-center gap-2 lg:hidden">
-            <Leaf className="h-6 w-6 text-emerald-600" />
+            <div className="h-8 w-8 bg-white/80 mask-[url('/logo_white.svg')] mask-contain mask-no-repeat mask-center" />
             <span className="text-lg font-semibold text-slate-900">AromaFlow</span>
           </div>
           <h2 className="text-xl font-semibold text-slate-900">Sign in</h2>

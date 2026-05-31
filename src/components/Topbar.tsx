@@ -41,7 +41,7 @@ export function Topbar({ user }: { user: SessionUser }) {
         <form action={logout}>
           <button
             type="submit"
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800 cursor-pointer"
             title="Sign out"
           >
             <LogOut className="h-4 w-4" />

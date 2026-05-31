@@ -11,9 +11,9 @@ import {
   Warehouse,
   Truck,
   FileClock,
-  Users,
-  Leaf,
+  Users
 } from "lucide-react";
+import Logo from "@/logo_white.svg"
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/constants";
 
@@ -35,8 +35,8 @@ export function Sidebar({ role }: { role: Role }) {
   const path = usePathname();
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
-      <div className="flex h-14 items-center gap-2 border-b border-slate-100 px-5">
-        <Leaf className="h-6 w-6 text-emerald-600" />
+      <div className="flex h-14 items-center gap-2 border-b border-slate-100 px-5 cursor-default">
+        <div className="h-8 w-8 bg-emerald-600 mask-[url('/logo_white.svg')] mask-contain mask-no-repeat mask-center" />
         <span className="text-base font-semibold tracking-tight text-slate-900">AromaFlow</span>
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">

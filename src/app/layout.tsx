@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Integrated manufacturing operations platform with AI quality control, lot traceability, and a tamper-evident audit trail.",
   icons:{
-    icon: "/leaf.svg",
+    icon: "/logo.svg",
   },
 };
 
