@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AromaFlow — Sima Arome Operations",
+  title: "AromaFlow",
   description:
     "Integrated manufacturing operations platform with AI quality control, lot traceability, and a tamper-evident audit trail.",
+  icons:{
+    icon: "/leaf.svg",
+  },
 };
 
 export default function RootLayout({
